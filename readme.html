@@ -1,0 +1,156 @@
+<html><head>
+    <meta charset="utf-8">
+    <title>readme.md—C:\Users\kindeng\Desktop\mvvm</title>
+    <link rel="stylesheet" type="text/css" href="./css/github.css">
+  </head>
+  <body>
+    <div class="container">
+      <div id="markup">
+        <article id="content" class="markdown-body"><h2>透过Vue, 如何实现一个简单的mvvm双向数据绑定</h2>
+<h4>1、一个简单的Vue例子：<a href="./vue-demo/index.html">Hello World!</a></h4>
+<p><strong>code:</strong> </p>
+<div class="codehilite"><pre>&lt;div id="vue-app"&gt;
+    &lt;input type="text" v-model="word"&gt;
+    &lt;p&gt;{{word}}&lt;/p&gt;
+    &lt;button v-on:click="sayHi"&gt;change model&lt;/button&gt;
+&lt;/div&gt;
+
+&lt;script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    var vm = new Vue({
+        el: '#vue-app',
+        data: {
+            word: 'Hello World!'
+        },
+
+        methods: {
+            sayHi: function() {
+                this.word = 'Hi, everybody!';
+            }
+        }
+    });
+&lt;/script&gt;
+</pre></div>
+
+
+<h4>2、如题，今天要跟大家分享的就是实现上面的功能，是这样子的：<a href="./mvvm.html">My mvvm</a></h4>
+<p><strong>code:</strong></p>
+<div class="codehilite"><pre>&lt;div id="mvvm-app"&gt;
+    &lt;input type="text" v-model="name"&gt;
+    &lt;input type="text" v-model="child.name"&gt;
+    &lt;p v-class="className" class="abc"&gt;
+        {{child.child.name}}
+    &lt;/p&gt;
+    &lt;span v-text="child.name"&gt;&lt;/span&gt;
+    &lt;p v-html="child.html"&gt;&lt;/p&gt;
+    &lt;button v-on:click="clickBtn"&gt;change model&lt;/button&gt;
+&lt;/div&gt;
+
+&lt;script src="./js/observer.js"&gt;&lt;/script&gt;
+&lt;script src="./js/watcher.js"&gt;&lt;/script&gt;
+&lt;script src="./js/compile.js"&gt;&lt;/script&gt;
+&lt;script src="./js/mvvm.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    var vm = new MVVM({
+        el: '#mvvm-app',
+        data: {
+            name: 'hello ',
+            className: 'btn',
+            spanText: 'hello world!',
+            child: {
+                name: '孩子名字',
+                html: '&lt;span style="color: #f00;"&gt;red&lt;/span&gt;',
+                child: {
+                    name: '孩子的孩子名字 '
+                }
+            }
+        },
+
+        methods: {
+            clickBtn: function(e) {
+                var randomStrArr = ['childOne', 'childTwo', 'childThree'];
+                this.child.name = randomStrArr[parseInt(Math.random() * 3)];
+            }
+        }
+    });
+&lt;/script&gt;
+</pre></div>
+
+
+<h4>3、目前实现数据绑定的几种做法</h4>
+<blockquote>
+<p>观察者模式（backbone.js）</p>
+<p>脏值检查（angular.js） </p>
+<p>数据劫持（vue.js） </p>
+</blockquote>
+<p>观察者模式一般通过sub, pub的方式实现数据和视图的绑定监听，更新数据方式通常 <code>vm.set('property', value)</code>, 这种方式现在毕竟太low了，我们更希望通过 <code>vm.property = value</code>这种方式更新数据，同时自动更新视图。</p>
+<p>angular.js 是通过脏值检测的方式比对数据是否有变更，来决定是否更新视图，最简单的方式就是通过 <code>setInterval()</code> 定时轮询检测数据变动，当然Google不会这么low，angular只有在指定的事件触发时进入脏值检测，大致如下：</p>
+<ul>
+<li>DOM事件，譬如用户输入文本，点击按钮等。( ng-click ) </li>
+<li>XHR响应事件 ( $http ) </li>
+<li>浏览器Location变更事件 ( $location ) </li>
+<li>Timer事件( $timeout , $interval ) </li>
+<li>执行 $digest() 或 $apply()</li>
+</ul>
+<p><strong> vue.js 则是数据劫持结合观察者模式，通过<code>Object.defineProperty()</code>来劫持各个属性的<code>setter</code>，<code>getter</code>，在数据变动时发布消息给订阅者，触发相应的监听回调。</strong></p>
+<h4>4、Vue的生命周期 (<a href="https://github.com/vuejs/vue/">Github</a>)</h4>
+<p><img src="https://vuejs.org.cn/images/lifecycle.png" width="640px"></p>
+<h4>5、我们要实现的关键点：</h4>
+<ul>
+<li>数据监听 Observer.js 和消息订阅器 Dep.js</li>
+<li>订阅者 Watcher.js</li>
+<li>指令编译器 Compile.js</li>
+<li>入口 mvvm</li>
+</ul>
+<h4>6、一切基于此Object.defineProperty()</h4>
+<p><em>IE8+</em></p>
+<p><strong>code:</strong></p>
+<div class="codehilite"><pre>function defineReative(data) {
+    var val;
+    Object.defineProperty(data, 'name', {
+        enumerable: true,   // 可枚举
+        configurable: true, // 不能再define
+        get: function() {
+            return val;
+        },
+        set: function(newVal) {
+            console.log('你变了：', val, ' ==&gt; ', newVal);
+            val = newVal;
+        }
+    });
+}
+
+var data = {};
+defineReative(data);
+</pre></div>
+
+
+<h4>7、实现Observer.js</h4>
+<p>负责监听源数据所有属性，一旦发生变化，通知订阅者更新视图</p>
+<p><a href="./js/observer.js">code</a></p>
+<h4>8、实现Compile.js</h4>
+<p>负责解析模板指令，不同的指令绑定不同的处理回调及视图更新方法</p>
+<p><a href="./js/compile.js">code</a></p>
+<h4>9、如何连接observe 和 compile --&gt; watcher.js（桥梁）</h4>
+<p>充当数据更新的订阅者，每一个属性的变化都会通知它，在compile阶段实例化并注入回调函数</p>
+<p>每一个属性都有一个watcher</p>
+<p><a href="./js/watcher.js">code</a></p></article>
+      </div>
+    </div>
+  
+  <script type="text/x-omnimarkup-config;executed=true">
+    window.App.Context = {
+      buffer_id: 43,
+      timestamp: '1467358184.713298',
+      revivable_key: 'QzpcVXNlcnNca2luZGVuZ1xEZXNrdG9wXG12dm1ccmVhZG1lLm1k'
+    };
+    window.App.Options = {
+      ajax_polling_interval: 500,
+      mathjax_enabled: false
+    };
+  </script>
+  <script type="text/javascript" src="/public/jquery-2.1.3.min.js"></script>
+  <script type="text/javascript" src="/public/imagesloaded.pkgd.min.js"></script>
+  <script type="text/javascript" src="/public/app.js"></script>
+
+</body></html>

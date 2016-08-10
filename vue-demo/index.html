@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>vue-demo</title>
+</head>
+<body>
+	<div id="vue-app">
+		<input type="text" v-model="word">
+		<p>{{word}}</p>
+		<button v-on:click="sayHi">change model</button>
+	</div>
+
+	<script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script>
+	<script>
+		var vm = new Vue({
+			el: '#vue-app',
+			data: {
+				word: 'Hello World!'
+			},
+
+			methods: {
+				sayHi: function() {
+					this.word = 'Hi, everybody!';
+				}
+			}
+		});
+	</script>
+</body>
+</html>

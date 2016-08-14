@@ -1,45 +1,19 @@
-## 透过Vue, 如何实现一个简单的mvvm双向数据绑定
+## 剖析Vue实现原理 - 如何实现双向绑定mvvm
 
-> 本文主要是在分析Vue源码的基础上，对其相关核心思想和逻辑进行简化，并通过实现一个简单的实现来阐述相关原理和思想，文中并不会涉及太多源码片段的解析，但其核心思想都会在文中表现出来，对阅读Vue源码会有更好的帮助，相信会让你的思路更加清晰~
+> 本文能帮你做什么？
+1、了解vue的双向数据绑定原理以及核心代码模块
+2、缓解好奇心的同时了解如何实现双向绑定
+> 为了便于说明原理与实现，本文相关代码主要摘自[vue源码](https://github.com/vuejs/vue), 并进行了简化改造，相对较简陋，并未考虑到数组的处理、数据的循环依赖等，也难免存在一些问题，欢迎大家指正。不过这些并不会影响大家的阅读和理解，相信对大家在阅读vue源码的时候会更有帮助
+> 本文所有相关代码均在github上面可找到 [https://github.com/DMQ/mvvm](https://github.com/DMQ/mvvm)
 
-#### 1、一个简单的Vue例子：[Hello World!](./vue-demo/index.html)
-**code:** 
+##### 相信大家对mvvm双向绑定应该都不陌生了，什么？还没了解过？骚年，out了，赶紧google一下吧。
+一言不合就上代码，下面先看一个本文最终实现的效果吧，和vue是一样的语法
+
 ```
-<div id="vue-app">
+<div id="mvvm-app">
 	<input type="text" v-model="word">
 	<p>{{word}}</p>
 	<button v-on:click="sayHi">change model</button>
-</div>
-
-<script src="http://cdn.bootcss.com/vue/1.0.25/vue.js"></script>
-<script>
-	var vm = new Vue({
-		el: '#vue-app',
-		data: {
-			word: 'Hello World!'
-		},
-
-		methods: {
-			sayHi: function() {
-				this.word = 'Hi, everybody!';
-			}
-		}
-	});
-</script>
-```
-
-#### 2、如题，今天要跟大家分享的就是实现上面的功能，是这样子的：[My mvvm](./mvvm.html)
-**code:**
-```
-<div id="mvvm-app">
-	<input type="text" v-model="name">
-	<input type="text" v-model="child.name">
-	<p v-class="className" class="abc">
-		{{child.child.name}}
-	</p>
-	<span v-text="child.name"></span>
-	<p v-html="child.html"></p>
-	<button v-on:click="clickBtn">change model</button>
 </div>
 
 <script src="./js/observer.js"></script>
@@ -50,27 +24,24 @@
 	var vm = new MVVM({
 		el: '#mvvm-app',
 		data: {
-			name: 'hello ',
-			className: 'btn',
-			spanText: 'hello world!',
-			child: {
-				name: '孩子名字',
-				html: '<span style="color: #f00;">red</span>',
-				child: {
-					name: '孩子的孩子名字 '
-				}
-			}
+			word: 'Hello World!'
 		},
-
 		methods: {
-			clickBtn: function(e) {
-				var randomStrArr = ['childOne', 'childTwo', 'childThree'];
-				this.child.name = randomStrArr[parseInt(Math.random() * 3)];
+			sayHi: function() {
+				this.word = 'Hi, everybody!';
 			}
 		}
 	});
 </script>
 ```
+
+效果：
+![demo1][demo1]
+
+
+##### 几种实现双向绑定的做法
+目前几种较为主流的双向绑定实现
+
 
 #### 3、目前实现数据绑定的几种做法
 
@@ -152,3 +123,4 @@ defineReative(data);
 
 [code](./js/watcher.js)
 
+[demo1]: ./img/1.gif

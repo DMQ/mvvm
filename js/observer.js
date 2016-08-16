@@ -20,7 +20,7 @@ Observer.prototype = {
 
         Object.defineProperty(data, key, {
             enumerable: true, // 可枚举
-            configurable: true, // 不能再define
+            configurable: false, // 不能再define
             get: function() {
                 if (Dep.target) {
                     dep.depend();

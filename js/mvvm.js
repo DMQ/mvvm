@@ -22,7 +22,7 @@ MVVM.prototype = {
     _proxy: function(key) {
         var me = this;
         Object.defineProperty(me, key, {
-            configurable: true,
+            configurable: false,
             enumerable: true,
             get: function proxyGetter() {
                 return me._data[key];

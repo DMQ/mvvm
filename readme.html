@@ -1014,45 +1014,19 @@ body .markdown-body
     page-break-after: avoid;
   }
 }
-</style><title>readme</title></head><body><article class="markdown-body"><h2 id="vuemvvm"><a name="user-content-vuemvvm" href="#vuemvvm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>剖析Vue实现原理，实现一个MVVM</h2>
+</style><title>readme</title></head><body><article class="markdown-body"><h2 id="vue-mvvm"><a name="user-content-vue-mvvm" href="#vue-mvvm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>剖析Vue实现原理 - 如何实现双向绑定mvvm</h2>
 <blockquote>
-<p>本文主要是在分析Vue源码的基础上，对其相关核心思想和逻辑进行简化，并通过实现一个简单的实现来阐述相关原理和思想，文中并不会涉及太多源码片段的解析，但其核心思想都会在文中表现出来，对阅读Vue源码会有更好的帮助，相信会让你的思路更加清晰~</p>
+<p>本文能帮你做什么？<br />
+1、了解vue的双向数据绑定原理以及核心代码模块<br />
+2、缓解好奇心的同时了解如何实现双向绑定<br />
+为了便于说明原理与实现，本文相关代码主要摘自<a href="https://github.com/vuejs/vue">vue源码</a>, 并进行了简化改造，相对较简陋，并未考虑到数组的处理、数据的循环依赖等，也难免存在一些问题，欢迎大家指正。不过这些并不会影响大家的阅读和理解，相信看完本文后对大家在阅读vue源码的时候会更有帮助<br />
+本文所有相关代码均在github上面可找到 <a href="https://github.com/DMQ/mvvm"><a href="https://github.com/DMQ/mvvm"><a href="https://github.com/DMQ/mvvm">https://github.com/DMQ/mvvm</a></a></a></p>
 </blockquote>
-<h4 id="1vuehello-world"><a name="user-content-1vuehello-world" href="#1vuehello-world" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>1、一个简单的Vue例子：<a href="///E://personal/%E5%89%8D%E7%AB%AF/mvvm/vue-demo/index.html">Hello World!</a></h4>
-<p><strong>code:</strong> <br />
-<pre><code>&lt;div id=&quot;vue-app&quot;&gt;
+<h5 id="mvvmvue"><a name="user-content-mvvmvue" href="#mvvmvue" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>相信大家对mvvm双向绑定应该都不陌生了，一言不合上代码（可怜的代码），下面先看一个本文最终实现的效果吧，和vue一样的语法，如果还不了解双向绑定，猛戳<a href="">这里</a></h5>
+<pre><code>&lt;div id=&quot;mvvm-app&quot;&gt;
     &lt;input type=&quot;text&quot; v-model=&quot;word&quot;&gt;
     &lt;p&gt;{{word}}&lt;/p&gt;
     &lt;button v-on:click=&quot;sayHi&quot;&gt;change model&lt;/button&gt;
-&lt;/div&gt;
-
-&lt;script src=&quot;http://cdn.bootcss.com/vue/1.0.25/vue.js&quot;&gt;&lt;/script&gt;
-&lt;script&gt;
-    var vm = new Vue({
-        el: '#vue-app',
-        data: {
-            word: 'Hello World!'
-        },
-
-        methods: {
-            sayHi: function() {
-                this.word = 'Hi, everybody!';
-            }
-        }
-    });
-&lt;/script&gt;
-</code></pre></p>
-<h4 id="2my-mvvm"><a name="user-content-2my-mvvm" href="#2my-mvvm" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>2、如题，今天要跟大家分享的就是实现上面的功能，是这样子的：<a href="///E://personal/%E5%89%8D%E7%AB%AF/mvvm/mvvm.html">My mvvm</a></h4>
-<p><strong>code:</strong><br />
-<pre><code>&lt;div id=&quot;mvvm-app&quot;&gt;
-    &lt;input type=&quot;text&quot; v-model=&quot;name&quot;&gt;
-    &lt;input type=&quot;text&quot; v-model=&quot;child.name&quot;&gt;
-    &lt;p v-class=&quot;className&quot; class=&quot;abc&quot;&gt;
-        {{child.child.name}}
-    &lt;/p&gt;
-    &lt;span v-text=&quot;child.name&quot;&gt;&lt;/span&gt;
-    &lt;p v-html=&quot;child.html&quot;&gt;&lt;/p&gt;
-    &lt;button v-on:click=&quot;clickBtn&quot;&gt;change model&lt;/button&gt;
 &lt;/div&gt;
 
 &lt;script src=&quot;./js/observer.js&quot;&gt;&lt;/script&gt;
@@ -1063,35 +1037,30 @@ body .markdown-body
     var vm = new MVVM({
         el: '#mvvm-app',
         data: {
-            name: 'hello ',
-            className: 'btn',
-            spanText: 'hello world!',
-            child: {
-                name: '孩子名字',
-                html: '&lt;span style=&quot;color: #f00;&quot;&gt;red&lt;/span&gt;',
-                child: {
-                    name: '孩子的孩子名字 '
-                }
-            }
+            word: 'Hello World!'
         },
-
         methods: {
-            clickBtn: function(e) {
-                var randomStrArr = ['childOne', 'childTwo', 'childThree'];
-                this.child.name = randomStrArr[parseInt(Math.random() * 3)];
+            sayHi: function() {
+                this.word = 'Hi, everybody!';
             }
         }
     });
 &lt;/script&gt;
-</code></pre></p>
-<h4 id="3"><a name="user-content-3" href="#3" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>3、目前实现数据绑定的几种做法</h4>
+</code></pre>
+
+<p>效果：<br />
+<img alt="img1" src="///F://git/mvvm/img/1.gif" /></p>
+<h3 id="_1"><a name="user-content-_1" href="#_1" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>几种实现双向绑定的做法</h3>
+<p>目前几种主流的mvc(vm)框架都实现了单向数据绑定，而我所理解的双向数据绑定无非就是在单向绑定的基础上给可输入元素（input、textare等）添加了change(input)事件，来动态修改model和 view，并没有多高深。所以无需太过介怀是实现的单向或双向绑定。</p>
+<p>实现数据绑定的做法有大致如下几种：</p>
 <blockquote>
-<p>观察者模式（backbone.js）</p>
+<p>发布者-订阅者模式（backbone.js）</p>
 <p>脏值检查（angular.js） </p>
 <p>数据劫持（vue.js） </p>
 </blockquote>
-<p>观察者模式一般通过sub, pub的方式实现数据和视图的绑定监听，更新数据方式通常 <code>vm.set('property', value)</code>, 这种方式现在毕竟太low了，我们更希望通过 <code>vm.property = value</code>这种方式更新数据，同时自动更新视图。</p>
-<p>angular.js 是通过脏值检测的方式比对数据是否有变更，来决定是否更新视图，最简单的方式就是通过 <code>setInterval()</code> 定时轮询检测数据变动，当然Google不会这么low，angular只有在指定的事件触发时进入脏值检测，大致如下：</p>
+<p><strong>发布者-订阅者模式:</strong> 一般通过sub, pub的方式实现数据和视图的绑定监听，更新数据方式通常做法是 <code>vm.set('property', value)</code>，这里有篇文章讲的比较详细，有兴趣可点<a href="http://www.html-js.com/article/Study-of-twoway-data-binding-JavaScript-talk-about-JavaScript-every-day">这里</a></p>
+<p>这种方式现在毕竟太low了，我们更希望通过 <code>vm.property = value</code>这种方式更新数据，同时自动更新视图，于是有了下面两种方式</p>
+<p><strong>脏值检查:</strong> angular.js 是通过脏值检测的方式比对数据是否有变更，来决定是否更新视图，最简单的方式就是通过 <code>setInterval()</code> 定时轮询检测数据变动，当然Google不会这么low，angular只有在指定的事件触发时进入脏值检测，大致如下：</p>
 <ul>
 <li>DOM事件，譬如用户输入文本，点击按钮等。( ng-click ) </li>
 <li>XHR响应事件 ( $http ) </li>
@@ -1099,7 +1068,126 @@ body .markdown-body
 <li>Timer事件( $timeout , $interval ) </li>
 <li>执行 $digest() 或 $apply()</li>
 </ul>
-<p><strong> vue.js 则是数据劫持结合观察者模式，通过<code>Object.defineProperty()</code>来劫持各个属性的<code>setter</code>，<code>getter</code>，在数据变动时发布消息给订阅者，触发相应的监听回调。</strong></p>
+<p><strong>数据劫持:</strong> vue.js 则是采用数据劫持结合发布者-订阅者模式的方式，通过<code>Object.defineProperty()</code>来劫持各个属性的<code>setter</code>，<code>getter</code>，在数据变动时发布消息给订阅者，触发相应的监听回调。</p>
+<h3 id="_2"><a name="user-content-_2" href="#_2" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>思路整理</h3>
+<p>已经了解到vue是通过数据劫持的方式来做数据绑定的，其中最核心的方法便是通过<code>Object.defineProperty()</code>来实现对属性的劫持，达到监听数据变动的目的，无疑这个方法是本文中最重要、最基础的内容之一，如果不熟悉defineProperty，猛戳<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty">这里</a><br />
+整理了一下，要实现mvvm的双向绑定，就必须要实现以下几点：<br />
+1、实现一个数据监听器Observer，能够对数据对象的所有属性进行监听，如有变动可拿到最新值并通知订阅者<br />
+2、实现一个指令解析器Compile，对每个元素节点的指令进行扫描和解析，根据指令替换数据，以及绑定相应的更新函数<br />
+3、实现一个Watcher，作为连接Observer和Compile的桥梁，能够订阅并收到每个属性变动的通知，执行指令绑定的相应回调函数，从而更新视图<br />
+4、mvvm入口函数，整合以上三者</p>
+<p>上述流程如图所示：<br />
+<img alt="img2" src="///F://git/mvvm/img/2.png" /></p>
+<h3 id="1observer"><a name="user-content-1observer" href="#1observer" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>1、实现Observer</h3>
+<p>ok, 思路已经整理完毕，也已经比较明确相关逻辑和模块功能了，let&rsquo;s do it<br />
+我们知道可以利用<code>Obeject.defineProperty()</code>来监听属性变动<br />
+那么将需要observe的数据对象进行递归遍历，包括子属性的属性，都加上    <code>set</code>和<code>get</code><br />
+这样的话，给这个对象的某个值赋值，就会触发<code>set</code>，那么就能监听到了数据变化。。相关代码可以是这样：<br />
+<pre><code>var data = {name: 'kindeng'};
+observe(data);
+data.name = 'dmq'; // 哈哈哈，监听到值变化了 kindeng --&gt; dmq
+
+function observe(data) {
+    if (!data || typeof data !== 'object') {
+        return;
+    }
+    Object.keys(data).forEach(function(key) {
+        defineReactive(data, key, data[key]);
+    });
+};
+
+function defineReactive(data, key, val) {
+    observe(val); // 监听子属性
+    Object.defineProperty(data, key, {
+        enumerable: true, // 可枚举
+        configurable: false, // 不能再define
+        get: function() {
+            return val;
+        },
+        set: function(newVal) {
+            console.log('哈哈哈，监听到值变化了 ', val, ' --&gt; ', newVal);
+            val = newVal;
+        }
+    });
+}
+
+</code></pre><br />
+这样我们已经可以监听每个数据的变化了，那么监听到变化之后就是怎么通知订阅者了，所以接下来我们需要实现一个消息订阅器，很简单，维护一个数组，用来收集订阅者，数据变动触发notify，再调用订阅者的update方法，代码改一下之后是这样：<br />
+<pre><code>// ... 省略
+function defineReactive(data, key, val) {
+    var dep = new Dep();
+    observe(val); // 监听子属性
+
+    Object.defineProperty(data, key, {
+        // ... 省略
+        set: function(newVal) {
+            if (val === newVal) return;
+            console.log('哈哈哈，监听到值变化了 ', val, ' --&gt; ', newVal);
+            val = newVal;
+            dep.notify(); // 通知所有订阅者
+        }
+    });
+}
+
+function Dep() {
+    this.subs = [];
+}
+Dep.prototype = {
+    addSub: function(sub) {
+        this.subs.push(sub);
+    },
+    notify: function() {
+        this.subs.forEach(function(sub) {
+            sub.update();
+        });
+    }
+};
+</code></pre><br />
+那么问题来了，谁是订阅者？没错，上面的思路整理中我们已经知道订阅者应该是Watcher, 而且<code>var dep = new Dep();</code>是在 defineReactive 方法内部定义的，所以想通过dep添加订阅者，就必须要在闭包内操作，所以我们可以在 <code>get</code>里面动手脚，<br />
+<pre><code>// Observer.js
+// ...省略
+Object.defineProperty(data, key, {
+    get: function() {
+    // dep.addDep(watcher); 
+    // 由于需要在闭包内添加watcher，所以可以在Dep定义一个全局target属性，暂存watcher, 添加完移除
+    Dep.target &amp;&amp; dep.addDep(Dep.target);
+    return val
+}
+    // ... 省略
+});
+
+
+// Wacher.js
+// ...省略
+get: function(key) {
+    Dep.target = this;
+    this.value = data.key;
+
+}
+
+</code></pre><br />
+先记住这个思路，Dep.target在什么时候赋值对应的watcher后面会讲到</p>
+<p>这里已经实现了一个Observer了，已经具备了应有的功能，vue源码在<a href="https://github.com/vuejs/vue/blob/dev/src/observer/index.js">这里</a>。那么接下来就是实现Compile了</p>
+<h3 id="2watcher"><a name="user-content-2watcher" href="#2watcher" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>2、实现Watcher</h3>
+<p>从前面知道，<code>var dep = new Dep();</code>是在 defineReactive 方法内部定义的，所以想通过dep添加订阅者，就必须要在闭包内操作，所以我们可以在  <code>get</code>里面动手脚<br />
+<pre><code>// ... 省略
+var dep = new Dep();
+Object.defineProperty(data, key, {
+    enumerable: true, // 可枚举
+    configurable: false, // 不能再define
+    get: function() {
+        dep.add
+        return val;
+    },
+    set: function(newVal) {
+        if (val === newVal) return;
+        console.log('哈哈哈，监听到值变化了 ', val, ' --&gt; ', newVal);
+        val = newVal;
+        dep.notify(); // 通知所有订阅者
+    }
+});
+
+</code></pre></p>
 <h4 id="4vue-github"><a name="user-content-4vue-github" href="#4vue-github" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>4、Vue的生命周期 (<a href="https://github.com/vuejs/vue/">Github</a>)</h4>
 <p><img src="https://vuejs.org.cn/images/lifecycle.png" width="640px"></p>
 <h4 id="5"><a name="user-content-5" href="#5" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>5、我们要实现的关键点：</h4>
@@ -1132,11 +1220,11 @@ defineReative(data);
 </code></pre></p>
 <h4 id="7observerjs"><a name="user-content-7observerjs" href="#7observerjs" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>7、实现Observer.js</h4>
 <p>负责监听源数据所有属性，一旦发生变化，通知订阅者更新视图</p>
-<p><a href="///E://personal/%E5%89%8D%E7%AB%AF/mvvm/js/observer.js">code</a></p>
+<p><a href="///F://git/mvvm/js/observer.js">code</a></p>
 <h4 id="8compilejs"><a name="user-content-8compilejs" href="#8compilejs" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>8、实现Compile.js</h4>
 <p>负责解析模板指令，不同的指令绑定不同的处理回调及视图更新方法</p>
-<p><a href="///E://personal/%E5%89%8D%E7%AB%AF/mvvm/js/compile.js">code</a></p>
+<p><a href="///F://git/mvvm/js/compile.js">code</a></p>
 <h4 id="9observe-compile-watcherjs"><a name="user-content-9observe-compile-watcherjs" href="#9observe-compile-watcherjs" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>9、如何连接observe 和 compile &ndash;&gt; watcher.js（桥梁）</h4>
 <p>充当数据更新的订阅者，每一个属性的变化都会通知它，在compile阶段实例化并注入回调函数</p>
 <p>每一个属性都有一个watcher</p>
-<p><a href="///E://personal/%E5%89%8D%E7%AB%AF/mvvm/js/watcher.js">code</a></p></article></body></html>
+<p><a href="///F://git/mvvm/js/watcher.js">code</a></p></article></body></html>

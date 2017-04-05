@@ -8,11 +8,11 @@
 
 ##### 相信大家对mvvm双向绑定应该都不陌生了，一言不合上代码，下面先看一个本文最终实现的效果吧，和vue一样的语法，如果还不了解双向绑定，猛戳[Google](https://www.google.com.hk/search?q=%E5%8F%8C%E5%90%91%E7%BB%91%E5%AE%9A)
 
-```
+```html
 <div id="mvvm-app">
-	<input type="text" v-model="word">
-	<p>{{word}}</p>
-	<button v-on:click="sayHi">change model</button>
+    <input type="text" v-model="word">
+    <p>{{word}}</p>
+    <button v-on:click="sayHi">change model</button>
 </div>
 
 <script src="./js/observer.js"></script>
@@ -20,17 +20,17 @@
 <script src="./js/compile.js"></script>
 <script src="./js/mvvm.js"></script>
 <script>
-	var vm = new MVVM({
-		el: '#mvvm-app',
-		data: {
-			word: 'Hello World!'
-		},
-		methods: {
-			sayHi: function() {
-				this.word = 'Hi, everybody!';
-			}
-		}
-	});
+var vm = new MVVM({
+    el: '#mvvm-app',
+        data: {
+            word: 'Hello World!'
+        },
+        methods: {
+            sayHi: function() {
+                this.word = 'Hi, everybody!';
+            }
+        }
+    });
 </script>
 ```
 
@@ -80,7 +80,7 @@ ok, 思路已经整理完毕，也已经比较明确相关逻辑和模块功能�
 我们知道可以利用`Obeject.defineProperty()`来监听属性变动
 那么将需要observe的数据对象进行递归遍历，包括子属性对象的属性，都加上	`setter`和`getter`
 这样的话，给这个对象的某个值赋值，就会触发`setter`，那么就能监听到了数据变化。。相关代码可以是这样：
-```
+```javascript
 var data = {name: 'kindeng'};
 observe(data);
 data.name = 'dmq'; // 哈哈哈，监听到值变化了 kindeng --> dmq
@@ -112,7 +112,7 @@ function defineReactive(data, key, val) {
 
 ```
 这样我们已经可以监听每个数据的变化了，那么监听到变化之后就是怎么通知订阅者了，所以接下来我们需要实现一个消息订阅器，很简单，维护一个数组，用来收集订阅者，数据变动触发notify，再调用订阅者的update方法，代码改善之后是这样：
-```
+```javascript
 // ... 省略
 function defineReactive(data, key, val) {
 	var dep = new Dep();
@@ -145,7 +145,7 @@ Dep.prototype = {
 ```
 那么问题来了，谁是订阅者？怎么往订阅器添加订阅者？
 没错，上面的思路整理中我们已经明确订阅者应该是Watcher, 而且`var dep = new Dep();`是在 `defineReactive`方法内部定义的，所以想通过`dep`添加订阅者，就必须要在闭包内操作，所以我们可以在	`getter`里面动手脚：
-```
+```javascript
 // Observer.js
 // ...省略
 Object.defineProperty(data, key, {
@@ -173,7 +173,7 @@ compile主要做的事情是解析模板指令，将模板中的变量替换成�
 ![img3][img3]
 
 因为遍历解析的过程有多次操作dom节点，为提高性能和效率，会先将跟节点`el`转换成文档碎片`fragment`进行解析编译操作，解析完成，再将`fragment`添加回原来的真实dom节点中
-```
+```javascript
 function Compile(el) {
     this.$el = this.isElementNode(el) ? el : document.querySelector(el);
     if (this.$el) {
@@ -197,7 +197,7 @@ Compile.prototype = {
 
 compileElement方法将遍历所有节点及其子节点，进行扫描解析编译，调用对应的指令渲染函数进行数据渲染，并调用对应的指令更新函数进行绑定，详看代码及注释说明：
 
-```
+```javascript
 Compile.prototype = {
 	// ... 省略
 	compileElement: function(el) {
@@ -276,7 +276,7 @@ Watcher订阅者作为Observer和Compile之间通信的桥梁，主要做的事�
 2、自身必须有一个update()方法
 3、待属性变动dep.notice()通知时，能调用自身的update()方法，并触发Compile中绑定的回调，则功成身退。
 如果有点乱，可以回顾下前面的[思路整理](#_2)
-```
+```javascript
 function Watcher(vm, exp, cb) {
     this.cb = cb;
     this.vm = vm;
@@ -331,7 +331,7 @@ ok, Watcher也已经实现了，[完整代码](https://github.com/DMQ/mvvm/blob/
 MVVM作为数据绑定的入口，整合Observer、Compile和Watcher三者，通过Observer来监听自己的model数据变化，通过Compile来解析编译模板指令，最终利用Watcher搭起Observer和Compile之间的通信桥梁，达到数据变化 -> 视图更新；视图交互变化(input) -> 数据model变更的双向绑定效果。
 
 一个简单的MVVM构造器是这样子：
-```
+```javascript
 function MVVM(options) {
     this.$options = options;
     var data = this._data = this.$options.data;
@@ -347,7 +347,7 @@ function MVVM(options) {
 
 所以这里需要给MVVM实例添加一个属性代理的方法，使访问vm的属性代理为访问vm._data的属性，改造后的代码如下：
 
-```
+```javascript
 function MVVM(options) {
     this.$options = options;
     var data = this._data = this.$options.data, me = this;

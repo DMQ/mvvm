@@ -9,10 +9,11 @@
 <div id="mvvm-app">
     <input type="text" v-model="someStr">
     <input type="text" v-model="child.someStr">
-    <p v-class="className" class="abc">
+    <!-- <p v-class="className" class="abc">
         {{someStr}}
         <span v-text="child.someStr"></span>
-    </p>
+    </p> -->
+    <p>{{getHelloWord}}</p>
     <p v-html="child.htmlStr"></p>
     <button v-on:click="clickBtn">change model</button>
 </div>
@@ -31,6 +32,12 @@
             htmlStr: '<span style="color: #f00;">red</span>',
             child: {
                 someStr: 'World !'
+            }
+        },
+
+        computed: {
+            getHelloWord: function() {
+                return this.someStr + this.child.someStr;
             }
         },
 

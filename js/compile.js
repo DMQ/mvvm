@@ -141,7 +141,7 @@ var compileUtil = {
     },
 
     _getVMVal: function(vm, exp) {
-        var val = vm._data;
+        var val = vm;
         exp = exp.split('.');
         exp.forEach(function(k) {
             val = val[k];
@@ -150,7 +150,7 @@ var compileUtil = {
     },
 
     _setVMVal: function(vm, exp, value) {
-        var val = vm._data;
+        var val = vm;
         exp = exp.split('.');
         exp.forEach(function(k, i) {
             // 非最后一个key，更新val的值

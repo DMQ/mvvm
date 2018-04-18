@@ -112,7 +112,6 @@ var compileUtil = {
             }
 
             me._setVMVal(vm, exp, newValue);
-            val = newValue;
         });
     },
 

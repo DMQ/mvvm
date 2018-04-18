@@ -1,5 +1,4 @@
 function Observer(data) {
-    this.data = data;
     this.walk(data);
 }
 
@@ -7,16 +6,13 @@ Observer.prototype = {
     walk: function(data) {
         var me = this;
         Object.keys(data).forEach(function(key) {
-            me.convert(key, data[key]);
+            me.defineReactive(data, key, data[key]);
         });
-    },
-    convert: function(key, val) {
-        this.defineReactive(this.data, key, val);
     },
 
     defineReactive: function(data, key, val) {
         var dep = new Dep();
-        var childObj = observe(val);
+        observe(val);
 
         Object.defineProperty(data, key, {
             enumerable: true, // 可枚举
@@ -33,7 +29,7 @@ Observer.prototype = {
                 }
                 val = newVal;
                 // 新的值是object的话，进行监听
-                childObj = observe(newVal);
+                observe(newVal);
                 // 通知订阅者
                 dep.notify();
             }
@@ -41,7 +37,7 @@ Observer.prototype = {
     }
 };
 
-function observe(value, vm) {
+function observe(value) {
     if (!value || typeof value !== 'object') {
         return;
     }

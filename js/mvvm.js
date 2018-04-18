@@ -11,7 +11,7 @@ function MVVM(options) {
 
     this._initComputed();
 
-    observe(data, this);
+    observe(data);
 
     this.$compile = new Compile(options.el || document.body, this)
 }

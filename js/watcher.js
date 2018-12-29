@@ -7,7 +7,7 @@ function Watcher(vm, expOrFn, cb) {
     if (typeof expOrFn === 'function') {
         this.getter = expOrFn;
     } else {
-        this.getter = this.parseGetter(expOrFn);
+        this.getter = this.parseGetter(expOrFn.trim());
     }
 
     this.value = this.get();

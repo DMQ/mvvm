@@ -38,7 +38,7 @@ Compile.prototype = {
                 me.compile(node);
 
             } else if (me.isTextNode(node) && reg.test(text)) {
-                me.compileText(node, RegExp.$1);
+                me.compileText(node, RegExp.$1.trim());
             }
 
             if (node.childNodes && node.childNodes.length) {

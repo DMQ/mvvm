@@ -32,12 +32,19 @@ Compile.prototype = {
 
         [].slice.call(childNodes).forEach(function(node) {
             var text = node.textContent;
-            var reg = /\{\{(.*)\}\}/;
+            var reg = /\{\{([^\{\}])*\}\}/mg;
 
             if (me.isElementNode(node)) {
                 me.compile(node);
 
             } else if (me.isTextNode(node) && reg.test(text)) {
+                var regList = text.match(reg);
+                var reg1 = /\{\{(.*)\}\}/;
+                regList.forEach((item)=>{
+                  if(reg1.test(item)){
+                    this.compileText(node,RegExp.$1)
+                  }
+                })
                 me.compileText(node, RegExp.$1.trim());
             }
 
@@ -123,10 +130,10 @@ var compileUtil = {
     bind: function(node, vm, exp, dir) {
         var updaterFn = updater[dir + 'Updater'];
 
-        updaterFn && updaterFn(node, this._getVMVal(vm, exp));
+        updaterFn && updaterFn(node, this._getVMVal(vm, exp),exp);
 
         new Watcher(vm, exp, function(value, oldValue) {
-            updaterFn && updaterFn(node, value, oldValue);
+            updaterFn && updaterFn(node, value, oldValue,exp);
         });
     },
 
@@ -166,7 +173,8 @@ var compileUtil = {
 
 var updater = {
     textUpdater: function(node, value) {
-        node.textContent = typeof value == 'undefined' ? '' : value;
+        var currentVal = typeof val!='undefined'?val:"";
+        node.textContent=node.textContent.replace("{{"+exp+'}}',currentVal)
     },
 
     htmlUpdater: function(node, value) {

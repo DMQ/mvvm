@@ -42,10 +42,9 @@ Compile.prototype = {
                 var reg1 = /\{\{(.*)\}\}/;
                 regList.forEach((item)=>{
                   if(reg1.test(item)){
-                    this.compileText(node,RegExp.$1)
+                    me.compileText(node,RegExp.$1)
                   }
                 })
-                me.compileText(node, RegExp.$1.trim());
             }
 
             if (node.childNodes && node.childNodes.length) {
@@ -129,11 +128,11 @@ var compileUtil = {
 
     bind: function(node, vm, exp, dir) {
         var updaterFn = updater[dir + 'Updater'];
+        var tempExp = exp.trim();
+        updaterFn && updaterFn(node, this._getVMVal(vm, tempExp),exp);
 
-        updaterFn && updaterFn(node, this._getVMVal(vm, exp),exp);
-
-        new Watcher(vm, exp, function(value, oldValue) {
-            updaterFn && updaterFn(node, value, oldValue,exp);
+        new Watcher(vm, tempExp, function(value, oldValue) {
+            updaterFn && updaterFn(node, value,tempExp);
         });
     },
 
@@ -173,7 +172,7 @@ var compileUtil = {
 
 var updater = {
     textUpdater: function(node, value,exp) {
-        var currentVal = typeof val!='undefined'?val:"";
+        var currentVal = typeof value!='undefined'?value:"";
         node.textContent=node.textContent.replace("{{"+exp+'}}',currentVal)
     },
 

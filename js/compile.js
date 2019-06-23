@@ -172,7 +172,7 @@ var compileUtil = {
 
 
 var updater = {
-    textUpdater: function(node, value) {
+    textUpdater: function(node, value,exp) {
         var currentVal = typeof val!='undefined'?val:"";
         node.textContent=node.textContent.replace("{{"+exp+'}}',currentVal)
     },

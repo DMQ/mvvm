@@ -10,6 +10,7 @@ function Compile(el, vm) {
 }
 
 Compile.prototype = {
+    constructor: Compile,
     node2Fragment: function(el) {
         var fragment = document.createDocumentFragment(),
             child;

@@ -4,6 +4,7 @@ function Observer(data) {
 }
 
 Observer.prototype = {
+    constructor: Observer,
     walk: function(data) {
         var me = this;
         Object.keys(data).forEach(function(key) {

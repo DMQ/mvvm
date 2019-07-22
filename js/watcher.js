@@ -14,6 +14,7 @@ function Watcher(vm, expOrFn, cb) {
 }
 
 Watcher.prototype = {
+    constructor: Watcher,
     update: function() {
         this.run();
     },

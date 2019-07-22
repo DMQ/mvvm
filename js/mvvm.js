@@ -17,6 +17,7 @@ function MVVM(options) {
 }
 
 MVVM.prototype = {
+    constructor: MVVM,
     $watch: function(key, cb, options) {
         new Watcher(this, key, cb);
     },

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Reactivity</title>
+</head>
+<body>
+    <script src="./reactive.js"></script>
+    <script src="./ref.js"></script>
+    <script src="./effect.js"></script>
+    <script src="./computed.js"></script>
+    <script src="./watch.js"></script>
+    <script>
+        const count = ref(0);
+        const data = reactive({});
+
+        effect(() => {
+            console.log('count changed:', count.value);
+        });
+
+        const cName = computed(() => `computed count: ${data.name}`);
+
+        watch(() => data.age, (newVal, oldVal) => {
+            console.log(`age changed: ${oldVal} -> ${newVal}`);
+        });
+
+        // 打开浏览器在console分别执行以下代码，看打印的日志
+        // count.value = 1;
+        // console.log(cName.value);
+        // data.name = 'word';
+        // console.log(cName.value);
+    </script>
+</body>
+</html>

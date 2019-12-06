@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>define</title>
+</head>
+<body>
+    <script>
+        const obj = {};
+        function run () {
+            for (let i = 0; i < 10000; i++) {
+                obj[i] = i;
+            }
+
+            Object.keys(obj).forEach((key) => {
+                let val = obj[key];
+                Object.defineProperty(obj, key, {
+                    set (newVal) {
+                        val = newVal;
+                    },
+
+                    get () {
+                        return val;
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
